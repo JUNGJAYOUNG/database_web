@@ -1,0 +1,15 @@
+package codingTest;
+import java.util.*;
+
+public class TimeCount3 {
+	
+	public static boolean check(int h,int m,int s) {
+		if(h % 10 == 3 || m/10 == 3 || m%3 == 3 || s/10 ==3 || s%10 ==3) 
+			return true;
+		return false;	
+	}
+	
+	public static void main(String[] args) {
+		
+	}
+}

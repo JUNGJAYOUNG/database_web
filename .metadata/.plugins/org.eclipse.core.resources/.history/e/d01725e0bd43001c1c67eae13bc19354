@@ -1,0 +1,7 @@
+package codingTest;
+
+public class UpDownLeftRight {
+	public static void main(String[] args) {
+		
+	}
+}

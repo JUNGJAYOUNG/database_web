@@ -1,0 +1,19 @@
+package codingTest;
+import java.util.*;
+
+public class NumberCardGame {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		Scanner sc = new Scanner(System.in);
+		
+		int row=sc.nextInt();
+		int col=sc.nextInt();
+		
+		int [][]arr = new arr[row][col];
+		
+		
+		
+	}
+
+}

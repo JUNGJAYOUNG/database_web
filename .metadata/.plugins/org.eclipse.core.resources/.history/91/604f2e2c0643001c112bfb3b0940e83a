@@ -1,0 +1,23 @@
+package codingTest;
+import java.util.*;
+
+public class NumberCardGame {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		Scanner sc = new Scanner(System.in);
+		
+		int row=sc.nextInt();
+		int col=sc.nextInt();
+		int result = 0;
+		
+		//한줄씩 입력받아 확인하기
+		for(in ti=0;i<row;++) {
+			
+		}
+		
+		
+		
+	}
+
+}
