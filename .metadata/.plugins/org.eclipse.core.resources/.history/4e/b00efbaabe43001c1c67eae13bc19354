@@ -1,8 +1,0 @@
-package codingTest;
-import java.util.*;
-
-public class UpDownLeftRight {
-	public static void main(String[] args) {
-		
-	}
-}
