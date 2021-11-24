@@ -1,3 +1,5 @@
+<%@page import="java.sql.*"%>
+<%@page import="com.sist.db.ConnectionProvider"%>
 <%@ page language="java" contentType="text/html; charset=EUC-KR"
     pageEncoding="EUC-KR"%>
 <!DOCTYPE html>
@@ -10,6 +12,19 @@
 <%
 	String sql = "select nvl(max(bookid),0)+1 from book";
 	int bookid = 0;
+	try{
+		Connection conn = ConnectionProvider.getConnection();
+		Statement stmt = conn.createStatement();
+		ResultSet rs = stmt.executeQuery(sql);
+		if(rs.next()){
+			bookid = rs.getInt(1);	
+		}
+		ConnectionProvider.close(conn,stmt,rs);
+	}catch(Exception e){
+		%>
+		예외발생:<%=e.getMessage() %>
+		<%
+	}
 %>
 	<h2>도서등록</h2>
 	<hr>
