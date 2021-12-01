@@ -1,0 +1,239 @@
+create table test(no number, title varchar2(20));
+
+insert into test values(20211128100,'test');
+insert into test values(2021112910,'test');
+insert into test values(2021112911,'test');
+insert into test values(2021112912,'test');
+
+no중에 날짜를 제외한 번호를 검색해보자.(단, 오늘날짜에 해당하는것만 뽑아옴)
+select substr(no,9) from test where substr(no,1,8) = to_char(sysdate,'yyyymmdd');
+
+이중에서 제일 큰값 뽑기
+select max(substr(no,9))+1 from test where substr(no,1,8) = to_char(sysdate,'yyyymmdd');
+
+select nvl(max(substr(no,9)),0)+1 from test where substr(no,1,8) = to_char(sysdate,'yyyymmdd');
+
+예약번호를 문자자료형으로 수정
+alter table reservation modify reservation_no varchar2(15);
+
+1행에 오류:
+ORA-02267: 열의 데이터 유형이 참조 열의 데이터 유형과 일치하지 않습니다
+
+예약테이블의 예약번호를 varchar2로 자료형을 수정하고 싶은데
+결재테이블이 예약테이블을 참조하고 있어서 바로 수정할 수 없다.
+
+참조키를 삭제한 후에 수정하고
+다시 참조키를 설정하도록 하겠다.
+
+사용자의 제약에 대한 정보를 갖고 있는 데이터사전
+user_constraints
+
+select constraint_name, constraint_type, table_name from user_constraints
+where table_name = 'PAYMENT';
+
+**주의) sql명령어 자체에 테이블이름은 대소문자를구별하지 않는다.
+그러나 value로써 테이블이름은 모두 대문자로 들어가 있으며 대소문자를 구별한다.
+
+
+CONSTRAINT_NAME CONSTRAINT_TYPE TABLE_NAME
+--------------- --------------- ---------------
+SYS_C008590     R               PAYMENT
+SYS_C008591     R               PAYMENT
+SYS_C008562     C               PAYMENT
+SYS_C008563     C               PAYMENT
+SYS_C008564     C               PAYMENT
+SYS_C008565     C               PAYMENT
+SYS_C008566     C               PAYMENT
+SYS_C008567     P               PAYMENT
+
+
+constraint_type이 R인 것이 참조키이다.
+이것을 모두 지우고 
+예약테이블의 예약번호 칼럼의 자료형을 수정한 후에
+다시 참조키를 설정하자.
+
+제약 삭제하는 명령
+alter table 테이블이름 drop constraint 제약명;
+
+alter table payment drop constraint SYS_C008590;
+alter table payment drop constraint SYS_C008591;
+
+
+-----
+alter table reservation modify reservation_no varchar2(15);
+alter table payment modify reservation_no varchar2(15);
+
+---
+다시 payment테이블에 참조키를 설정한다.
+alter table 테이블이름 add constraint 제약이름 foreign key(컬럼이름) references 부모테이블(컬럼이름);
+
+alter table payment add constraint fk_payment_reservation_no foreign key(reservation_no) references reservation(reservation_no);
+
+alter table payment add constraint fk_payment_type_code foreign key(payment_type_code) references payment_type(payment_type_code);
+
+
+---
+
+**프로젝트를 수행하다보면 테이블의 구조를 수정할 일이 빈번하다.
+
+이때 모든 테이블을 삭제하고 다시 모델링한 결과로 테이블을 만들 수도 있고
+(이때는 반드시 자식테이블을 먼저 삭제해야 한다.)
+혹은 관련 있는 테이블만 DDL명령어로 수정할 수 있다.
+이떄는 참조되고 있는 자식테이블이 있다면 참조키를 삭제한 후에 수정하고 
+다시 참조키를 설정한다.
+
+**참조키를 삭제하려면 user_constraints 테이블을 통하여 제약명을 확인한다.
+alter table 테이블이름 drop constraint 제약이름;
+
+**참조키를 설정하려면
+alter table 테이블이름 add constraint 제약이름 foreign key(컬럼이름) 부모테이블(컬럼이름);
+
+select nvl(max(substr(reservation_no,9)),0)+1 from reservation where substr(reservation_no,1,8) = to_char(sysdate,'yyyymmdd');
+
+---
+
+select fee from room where room_no = (select room_no from reservation where reservation_no='202111292');
+
+예약번호 202111292에 대한 숙박기간을 검색
+select checkout-checkin from reservation where reservation_no='202111292';
+
+예약번호 에 대한 숙박료 계산하여 출력
+
+select fee*(select checkout-checkin from reservation where reservation_no='202111292') from room where room_no = (select room_no from reservation where reservation_no='202111292');
+
+연습) 예약번호 202111292에 대한 숙박료를 수정하기
+update reservation set total= (select fee*(select checkout-checkin from reservation where reservation_no='202111292') from room where room_no = (select room_no from reservation where reservation_no='202111292')
+) where reservation_no = '202111292';
+
+연습) 예약 테이블에 레코드가 추가될때에 숙박료를 자동으로 계산하는 트리거를 만들고 실험해보기
+
+create or replace trigger trg_reservation
+after insert on reservation for each row
+declare
+begin
+ update reservation set total = (select fee*(select checkout-checkin from reservation 
+ where reservation_no=:new.reservation_no) from room 
+ where room_no = (select room_no from reservation 
+ where reservation_no=:new.reservation_no)
+ ) where reservation_no = :new.reservation_no;
+end;
+/
+
+----
+
+## HTML => Hyper Text Markup Language
+미국방성에서 군용품 품목정리를 위한 언어로 만들어졌다고 한다.
+종류별로 일목요연하게 정리하기 위한 무엇인가 필요해서 만듬
+글자를 누르면 그것을 설명하는 다른 문서로 이동
+=> HyperText
+글자에 표시를 해서 각각 다르게 보여준다.
+=> MarkUp
+
+---
+현재는 인터넷 상에서
+보여지는 문서의 형태가 html로 작성되어 있다.
+확장자를 .html로 하고
+문서를 작성하는 도구는 어느것을 사용해도 관계없다.
+
+작성된 html 문서를 내 컴퓨터에 하드디스크에 저장하면 나만 볼 수 있다.
+전세계인을 대상으로 서비스하려면
+웹서버를 구축하고 거기에 만들어야 한다.
+
+---
+
+html문서들은
+텍스트에 어떤 표시(mark)하는 것으로 구성된다
+이렇게 어떤 글자에 
+표시하는 것들을 태그라고 한다.
+
+어떤 태그들이 있는지 잘 알고 
+사용자의 요구에 맞도록 표현해야 한다.
+---
+
+현재의 html버전은 html5이다.
+
+스마트폰이 대중적으로 보급되면서 인터넷을 컴퓨터앞에 앉아서 사용하기 보다는
+이동하면서 스마트폰으로 하는 경우가 더 많아졌다.
+
+
+
+---
+### html5문서의 기본 구조
+<!doctype html>
+<html>
+ <head>
+  <title>html연습</title>
+ </head>
+ <body>
+  <h1>html이란?</h1>
+  <p>인터넷상에 보여지는 문서의 형태를 말한다. 문서를 작성하고 확장자를 .html로 해야한다. 
+  html문서를 표현하기 위해서는 여러가지의 종류의 태그를 알아야 한다.</p>
+ </body>
+</html>
+
+---
+어떤 태크는 여는 태그와 닫는 태그로 쌍으로 이루는 태그가 있고
+<html></html>
+<body></body>
+어떤 태그는 혼자 있는 태그도 있다.
+<hr>수평선 긋기 태그
+<br>줄바꿈 태그
+---
+제목태크
+ <h1>~<h6>
+ 다른 글자보다 진하게 표현된다.
+----
+텍스트 관련 태그
+<b></b> 굵게
+<strong></strong> 굵게
+<i></i> 기울임꼴
+<big></big> 크게
+<strike></strike> 취소선
+<u></u> 밑줄
+<sup></sup> 위첨자
+<sub></sub> 아랫첨자
+
+---
+글꼴, 글자크기, 글자색
+<font face="" size="" color="">
+
+---
+목록 관련 태그
+-순서 있는 목록
+<ol type="1"> <-1,A,a,I,i
+	<li>사과</li>
+	<li>사과</li>
+	<li>사과</li>
+</ol>
+
+-순서 없는 목록
+<ul type="disc">	<-circle,square
+	<li>사과</li>
+	<li>사과</li>
+	<li>사과</li>
+</ul>
+
+---
+### 표만들기
+<table border="1">
+ <tr>	<-테이블의 줄 의미
+  <td></td>	<-테이블의 칸을 의미
+  <td></td>
+ </tr>
+</table>
+
+<td rowspan="숫자"> 숫자만큼 줄합치기
+<td colspan="숫자"> 숫자만큼 칸합치기
+
+---
+다른 문서로 연결하기
+<a href="">문자열</a>
+
+---
+멀티미디어의 표현
+<audio src="">
+<video src="">
+
+
+
+
